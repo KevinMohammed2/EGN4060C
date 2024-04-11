@@ -1,0 +1,60 @@
+#include <AFMotor.h>
+#include <Servo.h>
+#include <Wire.h> // Include Wire library for I2C communication
+#include <Adafruit_MotorShield.h> // Include Adafruit Motor Shield library
+
+// Motor Shield setup
+Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create an instance of Adafruit Motor Shield
+AF_DCMotor motor1(1, MOTOR12_64KHZ); // Create motor1 object on M1 port of the shield
+AF_DCMotor motor2(2, MOTOR12_64KHZ); // Create motor2 object on M2 port of the shield
+Servo steeringServo;
+
+// Joystick pin setup
+const int joyX = A0;  // Analog pin A0 for X-axis
+const int joyY = A1;  // Analog pin A1 for Y-axis
+
+void setup() {
+  Serial.begin(9600);
+
+  steeringServo.attach(9);  // Attach steering servo to pin 9
+  
+  // Initialize Adafruit Motor Shield
+  AFMS.begin();
+
+  // Set up motors
+  motor1.setSpeed(255);  // Set maximum speed for motor1
+  motor2.setSpeed(255);  // Set maximum speed for motor2
+}
+
+void loop() {
+  // Read joystick values
+  int xVal = analogRead(joyX);
+  int yVal = analogRead(joyY);
+
+  // Map joystick values to motor speeds
+  int motorSpeed1 = map(yVal, 0, 1023, -255, 255);  // Throttle control
+  int motorSpeed2 = map(yVal, 0, 1023, -255, 255);  // Throttle control
+
+  // Map joystick values to steering angle
+  int steeringAngle = map(xVal, 0, 1023, 0, 180);  // Steering control
+  steeringServo.write(steeringAngle);
+
+  // Move the motors
+  motor1.setSpeed(abs(motorSpeed1));
+  motor2.setSpeed(abs(motorSpeed2));
+
+  // Set direction of motors
+  if (motorSpeed1 >= 0) {
+    motor1.run(FORWARD);
+  } else {
+    motor1.run(BACKWARD);
+  }
+
+  if (motorSpeed2 >= 0) {
+    motor2.run(FORWARD);
+  } else {
+    motor2.run(BACKWARD);
+  }
+
+  delay(100);  // Delay for stability
+}
